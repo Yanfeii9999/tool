@@ -1,0 +1,15 @@
+import {cp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url)),output=path.join(root,'public');
+if(path.dirname(output)!==root||path.basename(output)!=='public')throw Error('Unsafe build output path.');
+await rm(output,{recursive:true,force:true});
+await mkdir(path.join(output,'static'),{recursive:true});
+await cp(path.join(root,'index.html'),path.join(output,'index.html'));
+await cp(path.join(root,'.nojekyll'),path.join(output,'.nojekyll'));
+await cp(path.join(root,'static/style.css'),path.join(output,'static/style.css'));
+await cp(path.join(root,'web'),path.join(output,'web'),{recursive:true,filter:source=>!source.endsWith('.test.js')});
+const html=await readFile(path.join(output,'index.html'),'utf8');
+if(/clearframe|powered\s+by|made\s+with|floating.?badge/i.test(html))throw Error('Unexpected project branding in production HTML.');
+await writeFile(path.join(output,'build-info.json'),JSON.stringify({entry:'index.html',backend:false,userMediaIncluded:false},null,2));
+console.log('Production website built in public/; project branding check passed.');

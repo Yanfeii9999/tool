@@ -12,4 +12,4 @@ createServer(async(req,res)=>{
     if(inside.startsWith('..')||path.isAbsolute(inside)||!(await stat(target)).isFile()){res.writeHead(404);res.end('Not found');return;}
     res.writeHead(200,{'content-type':types[path.extname(target)]||'text/plain; charset=utf-8','cache-control':'no-cache'});res.end(await readFile(target));
   }catch{res.writeHead(404);res.end('Not found');}
-}).listen(8080,'127.0.0.1',()=>console.log('ClearFrame: http://127.0.0.1:8080 — Ctrl+C to stop'));
+}).listen(8080,'127.0.0.1',()=>console.log('Website: http://127.0.0.1:8080 — Ctrl+C to stop'));

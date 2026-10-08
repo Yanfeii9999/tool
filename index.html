@@ -2,19 +2,21 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="ClearFrame: chọn vùng xoá trên ảnh và video, xử lý ngay trong trình duyệt.">
-  <title>ClearFrame · Website xử lý watermark</title>
+  <meta name="description" content="Chọn vùng xoá trên ảnh và video, xử lý ngay trong trình duyệt.">
+  <title>Xử lý watermark trên ảnh và video</title>
   <link rel="stylesheet" href="./static/style.css">
   <link rel="stylesheet" href="./web/site.css">
 </head>
 <body><main>
-  <header><span class="logo">◈ ClearFrame</span><span class="tag">Không tải file lên máy chủ</span></header>
+  <header><span class="app-title">Xử lý ảnh & video</span><span class="tag">Không tải file lên máy chủ</span></header>
   <section class="intro"><p class="eyebrow">ẢNH & VIDEO · WEBSITE CHẠY TRÊN TRÌNH DUYỆT</p><h1>Xoá lớp logo. Giữ chi tiết nền.</h1><p>Watermark Gemini/Veo: giải ngược lớp alpha thay vì che mờ. Với watermark khác, kéo chuột chọn vùng và ghép nền thủ công. Dùng cho nội dung bạn sở hữu hoặc được phép chỉnh sửa.</p></section>
-  <section class="panel"><label class="drop">Chọn nhiều ảnh hoặc video<input id="files" type="file" multiple accept="image/*,video/*"><small>Ảnh xuất PNG · Video xuất MP4 hoặc WebM tuỳ trình duyệt</small></label><p id="message" role="status" aria-live="polite">Chọn file để bắt đầu. Chrome hoặc Edge trên máy tính phù hợp nhất cho xuất video.</p><button id="demo" class="secondary">Thử bằng ảnh & video mẫu</button></section>
+  <section class="panel"><label class="drop">Chọn nhiều ảnh hoặc video<input id="files" type="file" multiple accept="image/*,video/*"><small>Ảnh xuất PNG · Video xuất MP4 H.264</small></label><p id="message" role="status" aria-live="polite">Chọn file để bắt đầu. Chrome hoặc Edge trên máy tính phù hợp nhất cho xuất video.</p><button id="demo" class="secondary">Thử bằng ảnh & video mẫu</button></section>
   <section id="editor" class="panel" hidden>
     <div class="toolbar"><h2>Kéo chọn vùng watermark</h2><select id="fileList" aria-label="File đang chỉnh sửa"></select></div>
     <label>Thuật toán <select id="algorithm"><option value="gemini">Gemini / Veo — giải ngược alpha tự động</option><option value="texture">Watermark khác — kéo vùng và ghép nền</option></select></label>
     <p id="algorithmHelp">Kéo chuột khoanh logo Gemini/Veo để chỉ xử lý trong vùng chọn. Không khoanh vùng thì tự nhận diện toàn ảnh.</p>
+    <label id="stackedControl"><input id="stacked" type="checkbox" checked> Video có logo chồng: tự dò thêm lớp alpha</label>
+    <p class="hint">Bao cả hai logo trong khung xanh. Chỉ nhận thêm lớp khi mẫu khớp rõ; logo khác mẫu hoặc nền phức tạp vẫn cần kiểm tra kết quả.</p>
     <div id="manualControls">
     <p>Kéo từ góc trên trái đến góc dưới phải để bao hết watermark, gồm cả viền. Có thể chọn nhiều vùng; mỗi file có vùng chọn riêng.</p>
     <div class="toolbar"><label>Chế độ kéo <select id="drawMode"><option value="target">Khoanh vùng cần xoá</option><option value="donor">Chọn nền thay cho vùng cuối</option></select></label><button id="undo" class="secondary">Xoá vùng cuối</button><button id="reset" class="secondary">Xoá hết vùng</button></div>
@@ -25,10 +27,10 @@
     <div class="toolbar"><button id="preview" class="secondary">Xem thử kết quả</button><label><input id="disk" type="checkbox"> Lưu video thẳng vào thư mục đã chọn</label></div>
     <section id="comparison" hidden><h2>Kết quả xem thử</h2><p id="quality" role="status"></p><canvas id="after"></canvas><p class="hint">Giải ngược alpha cần đúng mẫu, vị trí và độ trong suốt. Nén video hoặc chỉnh sửa lại logo có thể để lại viền. Ghép nền là phương án thay chi tiết, có thể sai nội dung. Kiểm tra nhiều thời điểm trước khi xuất.</p></section>
     <div class="toolbar actions"><button id="start">Xử lý hàng loạt</button><button id="cancel" class="secondary" hidden>Dừng xử lý</button></div>
-    <small>Video xuất theo thời gian phát. Giữ tab hiển thị và máy không ngủ để hạn chế rớt khung hình. Watermark di chuyển cần xử lý từng đoạn. Với video dài, chọn lưu thẳng ra ổ đĩa; nếu không, kết quả sẽ chiếm RAM đến khi bạn tải về hoặc chọn lượt file mới.</small>
+    <small>Video được xử lý từng khung hình và xuất MP4. Bước dọn viền có thể chạy chậm; giữ tab mở và máy không ngủ. Logo di chuyển ngoài các vị trí nhận diện cần xử lý từng đoạn. Với video dài, chọn lưu thẳng ra ổ đĩa; nếu không, kết quả sẽ chiếm RAM đến khi bạn tải về hoặc chọn lượt file mới.</small>
   </section>
   <section id="results" class="panel" hidden><h2>Tiến độ & kết quả</h2><div id="resultList"></div></section>
-  <footer>ClearFrame · Không cần Python hay API · Thuật toán Gemini dựa trên <a href="https://github.com/GargantuaX/gemini-watermark-remover" target="_blank" rel="noopener">GargantuaX/gemini-watermark-remover</a> · <a href="./web/vendor/gemini/LICENSE">Giấy phép MIT</a></footer>
-  <video id="player" playsinline preload="auto" class="processing-video" aria-hidden="true"></video>
+  <footer>Thuật toán Gemini dựa trên <a href="https://github.com/GargantuaX/gemini-watermark-remover" target="_blank" rel="noopener">GargantuaX/gemini-watermark-remover</a> · <a href="./web/vendor/gemini/LICENSE">MIT</a> · Bộ xuất video <a href="./web/vendor/mediabunny/UPSTREAM.md">MediaBunny</a> · <a href="./web/vendor/mediabunny/LICENSE">MPL 2.0</a></footer>
+  <video id="player" playsinline preload="auto" hidden aria-hidden="true"></video>
 </main><script type="module" src="./web/app.js"></script></body>
 </html>

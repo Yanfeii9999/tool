@@ -1,4 +1,4 @@
-name: Deploy ClearFrame website
+name: Deploy watermark remover website
 on:
   push:
     branches: [main]
@@ -23,16 +23,11 @@ jobs:
           node-version: '22'
       - name: Check JavaScript
         run: |
-          node --check web/app.js
-          node --check web/repair.js
+          node scripts/check.mjs
           node --test web/*.test.js
       - name: Prepare website only
         run: |
-          mkdir public
-          cp index.html .nojekyll public/
-          mkdir public/static
-          cp static/style.css public/static/
-          cp -r web public/web
+          node build.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

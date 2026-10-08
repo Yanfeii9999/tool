@@ -3,6 +3,8 @@ __pycache__/
 data/
 outputs/
 node_modules/
+public/
+.qa/
 *.mp4
 *.mov
 *.mkv
