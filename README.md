@@ -52,6 +52,7 @@ Công thức với logo trắng: `original = (watermarked - alpha × 255) / (1 -
 npm test
 npm run check
 npm run build
+npm run check:build
 ```
 
 Bao gồm ánh xạ vùng kéo, bảo toàn pixel ngoài vùng chọn, chọn nền không chồng watermark, alpha upstream, nhận diện video, giải alpha và logo chồng cùng kích thước/lồng nhỏ. Kiểm thử mẫu mô phỏng không thay thế đánh giá trực quan trên video thật. Xem `AUDIT_REPORT.md` để biết phạm vi đã xác minh và giới hạn.

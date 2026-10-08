@@ -14,6 +14,7 @@ Ngày kiểm tra: 08/10/2026. Phạm vi: mã nguồn website tĩnh, bản build 
 | Logo chồng còn lớp alpha sau lần xoá đầu | `web/layers.js` | Fit alpha tổng hợp trên nền cục bộ; hỗ trợ cùng mẫu lặp tối đa ba lớp và mẫu nhỏ lồng bên trong/độ lệch nhỏ. Chỉ chấp nhận lớp thêm khi sai số đủ thấp; có checkbox tắt/bật. Không lặp phép trừ cố định. |
 | Viền logo sau giải alpha video | `web/cleanup.js` | Áp dụng dọn viền theo footprint của alpha bằng mã upstream, có padding nền. Có thể làm mềm chi tiết trong footprint. |
 | Ghi video lúc phát có thể rơi frame | `web/offline-video.js` | Chuyển sang giải mã → xử lý → mã hoá lần lượt bằng WebCodecs/MediaBunny. Dùng timestamp nguồn, H.264 MP4, sao chép các track âm thanh tương thích. |
+| Tab giữ module cũ sau khi deploy | `build.mjs` | Gắn cùng version theo hash nội dung cho CSS, script, Worker và toàn bộ relative module imports trong artifact production. |
 | Video helper CSS fixed/opacity | `index.html`, `web/site.css` | Bỏ CSS fixed/opacity của video helper; dùng thuộc tính `hidden` cho phần tử giải mã. Đây là phần tử kỹ thuật, không dùng để che branding hoặc logo trong kết quả. |
 
 Không dùng CSS `opacity:0`, `display:none` hoặc `visibility:hidden` để che branding đã gỡ. Khung chọn xanh là lớp giao diện; không được vẽ vào file xuất.
@@ -42,8 +43,9 @@ Không sửa hoặc xóa video/ảnh gốc của người dùng. Tệp kết qu�
 | Kiểm tra | Kết quả |
 |---|---|
 | Node test | 18/18 qua: alpha upstream, detect video, hai logo cùng cỡ, logo lồng nhỏ, giới hạn vùng chọn, vùng chồng, pixel ngoài vùng, ghép nền và lỗi vùng không hợp lệ. |
-| JavaScript check | 77 JS/MJS trong workspace và 76 trong repo website parse được; relative imports và tài nguyên HTML tồn tại; kiểm tra branding HTML qua. |
+| JavaScript check | 78 JS/MJS trong workspace và 77 trong repo website parse được; relative imports và tài nguyên HTML tồn tại; kiểm tra branding HTML qua. |
 | Production build | `node build.mjs` qua; quét HTML production không còn branding riêng đã gỡ. |
+| Production module graph | `node scripts/check-build.mjs` qua: 68 module, toàn bộ relative JS imports/entry CSS dùng đúng version, không có media cá nhân/backend/test trong build. Artifact local chạy được Worker, xuất ảnh demo và video demo đủ 56 frame nguồn. |
 | ESLint / TypeScript | Không có cấu hình hoặc dependency tương ứng. Không gọi kiểm tra cú pháp là lint/typecheck. |
 | Python cũ | Compile các tệp Python qua. Smoke upload/preview/validation/inpainting/download qua; test texture restoration qua với dữ liệu test riêng. |
 | Browser | Preview ảnh mẫu qua, không có JS error trong tab kiểm tra; kiểm tra kéo vùng Gemini bằng chuột trên demo, video thật và viewport mobile; undo/reset và chuyển thuật toán đã kiểm tra. |
@@ -61,8 +63,14 @@ Không sửa hoặc xóa video/ảnh gốc của người dùng. Tệp kết qu�
 - Chưa kiểm thử nghe âm thanh, phụ đề/metadata/HDR không được bảo toàn. Codec audio không tương thích MP4 được báo lỗi rõ.
 - Kiểm tra production và trạng thái triển khai GitHub được ghi nhận riêng sau khi push; không suy ra deploy thành công chỉ từ build local.
 
+## Triển khai đã xác minh
+
+Mã chức năng commit `1935b14` đã push lên `main`. [GitHub Actions run 37777662106](https://github.com/Yanfeii9999/tool/actions/runs/37777662106) báo **Success**, gồm check/test/build và deploy Pages. Website: https://yanfeii9999.github.io/tool/.
+
+CI có warning về các action dùng Node 20 được runner chuyển sang Node 24 và notice về lịch nâng Ubuntu runner. Chúng không làm thất bại job; chưa nâng version các action trong phạm vi sửa watermark. Bản bổ sung version asset được kiểm tra riêng trên production sau triển khai tiếp theo.
+
 ## Tệp thay đổi
 
 Website: `index.html`, `static/style.css`, `web/site.css`, `web/app.js`, `web/gemini.js`, `web/regions.js`, `web/cleanup.js`, `web/layers.js`, `web/offline-video.js` và các bài test liên quan. Thêm module cleanup upstream và MediaBunny cùng license/nguồn, không sửa nội dung vendor bundle.
 
-Build/tài liệu: `package.json`, `serve.mjs`, `build.mjs`, `scripts/check.mjs`, `.github/workflows/pages.yml`, `.gitignore`, `README.md`, `AUDIT_REPORT.md`. Backend cũ chỉ cập nhật `templates/index.html` và `README-python.md` để bỏ branding giao diện, giữ logic nghiệp vụ.
+Build/tài liệu: `package.json`, `serve.mjs`, `build.mjs`, `scripts/check.mjs`, `scripts/check-build.mjs`, `.github/workflows/pages.yml`, `.gitignore`, `README.md`, `AUDIT_REPORT.md`. Backend cũ chỉ cập nhật `templates/index.html` và `README-python.md` để bỏ branding giao diện, giữ logic nghiệp vụ.

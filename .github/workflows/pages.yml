@@ -28,6 +28,7 @@ jobs:
       - name: Prepare website only
         run: |
           node build.mjs
+          node scripts/check-build.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
