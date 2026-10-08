@@ -1,0 +1,6 @@
+{
+  "name": "clearframe-website",
+  "private": true,
+  "type": "module",
+  "scripts": {"start": "node serve.mjs", "test": "node --test web/*.test.js"}
+}
