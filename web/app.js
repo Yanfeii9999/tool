@@ -9,26 +9,33 @@ const resultURLs=[];
 function message(text){$('message').textContent=text;}
 function controls(value){busy=value;for(const id of ['files','demo','fileList','algorithm','undo','reset','seek','drawMode','preview','start','disk']) $(id).disabled=value;$('cancel').hidden=!value;}
 function isGemini(){return $('algorithm').value==='gemini';}
-$('algorithm').onchange=()=>{$('manualControls').hidden=isGemini();$('algorithmHelp').textContent=isGemini()?'Gemini tự dò mẫu logo và vị trí, không cần khoanh. Xem thử trước khi xuất; không dùng cho vùng đã bị che mờ.':'Kéo chuột khoanh vùng cho mỗi file. Chọn nền thủ công nếu ghép tự động chưa khớp.';$('comparison').hidden=true;draw();};
+function syncAlgorithm(){
+  $('drawMode').querySelector('option[value="donor"]').disabled=isGemini();
+  if(isGemini())$('drawMode').value='target';
+  $('algorithmHelp').textContent=isGemini()?'Kéo chuột khoanh logo Gemini/Veo để chỉ xử lý trong vùng chọn. Không khoanh vùng thì tự nhận diện toàn ảnh. Logo khác cần chọn chế độ ghép nền.':'Kéo chuột khoanh vùng cho mỗi file. Chọn nền thủ công nếu ghép tự động chưa khớp.';
+  $('comparison').hidden=true;draw();
+}
+$('algorithm').onchange=syncAlgorithm;
 function eventOnce(target,name){return new Promise((resolve,reject)=>{const done=e=>{cleanup();resolve(e);},error=()=>{cleanup();reject(Error('Trình duyệt không đọc được định dạng file này.'));};function cleanup(){target.removeEventListener(name,done);target.removeEventListener('error',error);}target.addEventListener(name,done,{once:true});target.addEventListener('error',error,{once:true});});}
 function capture(media,width,height){source.width=width;source.height=height;source.getContext('2d').drawImage(media,0,0,width,height);}
 function draw(extra){
   if(!current || !source.width) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);
-  for(const r of [...(isGemini()?[]:current.regions),...(extra?[extra]:[])]){
+  $('selectionStatus').textContent=current.regions.length?`Đã chọn ${current.regions.length} vùng · ${isGemini()?'Giải alpha chỉ trong khung xanh.':'Ghép nền trong khung xanh.'}`:'Kéo chuột trực tiếp trên ảnh bên dưới để khoanh watermark.';
+  for(const r of [...current.regions,...(extra?[extra]:[])]){
     ctx.lineWidth=2;ctx.strokeStyle='#64e6c2';ctx.fillStyle='#64e6c233';ctx.fillRect(r.x*canvas.width,r.y*canvas.height,r.w*canvas.width,r.h*canvas.height);ctx.strokeRect(r.x*canvas.width,r.y*canvas.height,r.w*canvas.width,r.h*canvas.height);
-    if(r.donor){ctx.strokeStyle='#ffd06b';ctx.strokeRect(r.donor.x*canvas.width,r.donor.y*canvas.height,r.w*canvas.width,r.h*canvas.height);}
+    if(r.donor&&!isGemini()){ctx.strokeStyle='#ffd06b';ctx.strokeRect(r.donor.x*canvas.width,r.donor.y*canvas.height,r.w*canvas.width,r.h*canvas.height);}
   }
 }
 function point(e){const b=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-b.left)/b.width)),y:Math.max(0,Math.min(1,(e.clientY-b.top)/b.height))};}
 canvas.onpointerdown=e=>{
-  if(busy || loading || !current || isGemini()) return;
-  origin=point(e);drag=$('drawMode').value;canvas.setPointerCapture(e.pointerId);
+  if(busy || loading || !current || e.button!==0) return;
+  e.preventDefault();origin=point(e);drag=isGemini()?'target':$('drawMode').value;canvas.setPointerCapture(e.pointerId);
   if(drag==='donor'&&!current.regions.length){origin=null;message('Khoanh vùng watermark trước khi chọn nền thay thế.');}
 };
 function updateDonor(p){const r=current.regions.at(-1);r.donor={x:Math.max(0,Math.min(1-r.w,p.x-r.w/2)),y:Math.max(0,Math.min(1-r.h,p.y-r.h/2))};}
 canvas.onpointermove=e=>{if(!origin)return;const p=point(e);if(drag==='donor'){updateDonor(p);draw();}else draw({x:Math.min(origin.x,p.x),y:Math.min(origin.y,p.y),w:Math.abs(p.x-origin.x),h:Math.abs(p.y-origin.y)});};
-canvas.onpointerup=e=>{if(!origin)return;const p=point(e);if(drag==='donor')updateDonor(p);else{const r={x:Math.min(origin.x,p.x),y:Math.min(origin.y,p.y),w:Math.abs(p.x-origin.x),h:Math.abs(p.y-origin.y)};if(r.w>.003&&r.h>.003&&current.regions.length<30)current.regions.push(r);}origin=null;$('comparison').hidden=true;draw();};
+canvas.onpointerup=e=>{if(!origin)return;const p=point(e);if(drag==='donor')updateDonor(p);else{const r={x:Math.min(origin.x,p.x),y:Math.min(origin.y,p.y),w:Math.abs(p.x-origin.x),h:Math.abs(p.y-origin.y)};if(r.w>.003&&r.h>.003&&current.regions.length<30)current.regions.push(r);}origin=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);$('comparison').hidden=true;draw();};
 canvas.onpointercancel=()=>{origin=null;draw();};
 $('undo').onclick=()=>{current?.regions.pop();$('comparison').hidden=true;draw();};
 $('reset').onclick=()=>{if(current)current.regions=[];$('comparison').hidden=true;draw();};
@@ -45,7 +52,7 @@ async function openItem(item){
     }else{
       const image=new Image();const ready=eventOnce(image,'load');image.src=item.url;await ready;if(version!==loadVersion)return;capture(image,image.naturalWidth,image.naturalHeight);
     }
-    canvas.width=Math.min(1200,source.width);canvas.height=Math.round(canvas.width*source.height/source.width);draw();message(isGemini()?'Gemini/Veo: bấm Xem thử để tự nhận diện và giải ngược lớp logo.':'Kéo chọn vùng cần xoá. Có thể chọn nền thay thế thủ công để kiểm soát kết quả.');
+    canvas.width=Math.min(1200,source.width);canvas.height=Math.round(canvas.width*source.height/source.width);draw();message('Kéo chuột trên ảnh để khoanh watermark, rồi bấm Xem thử kết quả.');
   }catch(e){if(version===loadVersion)message(e.message);}finally{if(version===loadVersion){loading=false;$('start').disabled=false;$('preview').disabled=false;}}
 }
 async function loadFiles(files){
@@ -81,8 +88,8 @@ $('preview').onclick=async()=>{
   try{
     message('Đang phân tích và phục hồi…');
     if(isGemini()){
-      if(current.video){const detection=await scanVideo(current);const applied=applyGeminiVideo(source,$('after'),detection);$('quality').textContent=applied?`Đã giải ngược alpha (${detection.watermarkKind}). ${detection.isConfident?'':'Nhận diện chưa chắc chắn; kiểm tra kỹ viền logo.'}`:'Khung hình này không có đủ tín hiệu logo; đang hiển thị bản gốc.';}
-      else{const meta=await geminiImage(source,$('after'));$('quality').textContent=meta.applied?'Đã giải ngược lớp watermark Gemini. Kiểm tra chi tiết vùng logo.':'Chưa nhận diện được watermark Gemini phù hợp; ảnh xem thử chưa được xoá.';}
+      if(current.video){const detection=await scanVideo(current);const applied=applyGeminiVideo(source,$('after'),detection,1,current.regions);$('quality').textContent=applied?`Đã giải ngược alpha (${detection.watermarkKind})${current.regions.length?' trong vùng đã chọn':''}. Kiểm tra kỹ viền logo.`:'Không tìm thấy logo phù hợp trong vùng chọn ở khung hình này. Hãy khoanh bao hết logo hoặc chọn chế độ ghép nền.';}
+      else{const meta=await geminiImage(source,$('after'),current.regions);$('quality').textContent=meta.applied?'Đã giải ngược lớp watermark Gemini trong vùng xử lý. Kiểm tra chi tiết và viền logo.':'Không tìm thấy logo Gemini phù hợp trong vùng chọn. Hãy khoanh bao hết logo hoặc chọn chế độ ghép nền.';}
     }else{if(!current.regions.length)throw Error('Hãy khoanh ít nhất một vùng.');applyPlan(source,$('after'),makePlan(source,current.regions));$('quality').textContent='Đã thay vùng chọn bằng nền lân cận. Đây là ghép nền, không phải giải ngược alpha.';}
     $('comparison').hidden=false;message('Đã có kết quả xem thử. Kiểm tra trước khi xuất.');
   }catch(e){message(e.message);}finally{loading=false;controls(false);if(!window.showDirectoryPicker)$('disk').disabled=true;}
@@ -91,7 +98,7 @@ if(!('showDirectoryPicker' in window)){$('disk').disabled=true;$('disk').parentE
 function resultRow(item){const row=document.createElement('div');row.className='row';const name=document.createElement('strong');name.textContent=item.file.name;const state=document.createElement('p');state.className='state';state.textContent='Đang chuẩn bị…';const progress=document.createElement('progress');progress.max=100;progress.value=0;row.append(name,state,progress);$('resultList').append(row);return{row,state,progress};}
 function addDownload(row,blob,name){const url=URL.createObjectURL(blob);resultURLs.push(url);const link=document.createElement('a');link.href=url;link.download=name;link.textContent=`Tải ${name} (${(blob.size/1048576).toFixed(1)} MB)`;row.append(link);}
 function outputName(item,ext){return item.file.name.replace(/\.[^.]+$/,'')+'_clean.'+ext;}
-async function imageOutput(item){const image=new Image();const ready=eventOnce(image,'load');image.src=item.url;await ready;capture(image,image.naturalWidth,image.naturalHeight);const output=document.createElement('canvas');if(isGemini()){const meta=await geminiImage(source,output);if(!meta.applied)throw Error('Chưa nhận diện được mẫu Gemini. Chọn chế độ kéo vùng để xử lý watermark khác.');}else applyPlan(source,output,makePlan(source,item.regions));return new Promise((resolve,reject)=>output.toBlob(b=>b?resolve(b):reject(Error('Không xuất được ảnh PNG.')),'image/png'));}
+async function imageOutput(item){const image=new Image();const ready=eventOnce(image,'load');image.src=item.url;await ready;capture(image,image.naturalWidth,image.naturalHeight);const output=document.createElement('canvas');if(isGemini()){const meta=await geminiImage(source,output,item.regions);if(!meta.applied)throw Error('Không tìm thấy logo Gemini phù hợp trong vùng xử lý. Khoanh lại hoặc chọn ghép nền.');}else applyPlan(source,output,makePlan(source,item.regions));return new Promise((resolve,reject)=>output.toBlob(b=>b?resolve(b):reject(Error('Không xuất được ảnh PNG.')),'image/png'));}
 async function createUniqueOutput(directory,name){
   const stem=name.replace(/\.[^.]+$/,''),ext=name.split('.').pop();
   for(let n=0;n<10000;n++){
@@ -118,7 +125,7 @@ async function videoOutput(item,view,directory){
     if(player.currentTime>.001){const seeked=eventOnce(player,'seeked');player.currentTime=0;await seeked;capture(player,player.videoWidth,player.videoHeight);}
     const plan=isGemini()?null:makePlan(source,item.regions),output=document.createElement('canvas');
     let appliedFrames=0;
-    const render=()=>{if(detection){if(applyGeminiVideo(source,output,detection))appliedFrames++;}else applyPlan(source,output,plan);};render();
+    const render=()=>{if(detection){if(applyGeminiVideo(source,output,detection,1,item.regions))appliedFrames++;}else applyPlan(source,output,plan);};render();
     if(directory){const created=await createUniqueOutput(directory,name);writable=created.writable;name=created.name;}
     stream=output.captureStream(0);const track=stream.getVideoTracks()[0];
     if(!track.requestFrame)throw Error('Trình duyệt không hỗ trợ ghi từng khung hình canvas.');
@@ -169,3 +176,4 @@ $('start').onclick=async()=>{
 };
 $('cancel').onclick=()=>{stopRequested=true;activeStop?.();message('Đang dừng xử lý…');};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&busy)message('Tab đang ẩn: trình duyệt có thể giảm tốc hoặc rớt khung hình. Hãy quay lại tab khi xuất video.');});
+syncAlgorithm();

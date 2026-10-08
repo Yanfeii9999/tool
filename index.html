@@ -12,13 +12,14 @@
   <section class="intro"><p class="eyebrow">ẢNH & VIDEO · WEBSITE CHẠY TRÊN TRÌNH DUYỆT</p><h1>Xoá lớp logo. Giữ chi tiết nền.</h1><p>Watermark Gemini/Veo: giải ngược lớp alpha thay vì che mờ. Với watermark khác, kéo chuột chọn vùng và ghép nền thủ công. Dùng cho nội dung bạn sở hữu hoặc được phép chỉnh sửa.</p></section>
   <section class="panel"><label class="drop">Chọn nhiều ảnh hoặc video<input id="files" type="file" multiple accept="image/*,video/*"><small>Ảnh xuất PNG · Video xuất MP4 hoặc WebM tuỳ trình duyệt</small></label><p id="message" role="status" aria-live="polite">Chọn file để bắt đầu. Chrome hoặc Edge trên máy tính phù hợp nhất cho xuất video.</p><button id="demo" class="secondary">Thử bằng ảnh & video mẫu</button></section>
   <section id="editor" class="panel" hidden>
-    <div class="toolbar"><h2>Chọn cách xử lý</h2><select id="fileList" aria-label="File đang chỉnh sửa"></select></div>
+    <div class="toolbar"><h2>Kéo chọn vùng watermark</h2><select id="fileList" aria-label="File đang chỉnh sửa"></select></div>
     <label>Thuật toán <select id="algorithm"><option value="gemini">Gemini / Veo — giải ngược alpha tự động</option><option value="texture">Watermark khác — kéo vùng và ghép nền</option></select></label>
-    <p id="algorithmHelp">Chế độ Gemini tự dò logo đã biết, không cần khoanh vùng. Xem thử trước khi xuất. Không áp dụng cho logo đặc hoặc phần đã bị bôi mờ từ trước.</p>
-    <div id="manualControls" hidden>
-    <p>Mỗi file có vùng chọn riêng. Kéo vùng bao hết watermark. Có thể chọn nhiều vùng; file không có vùng chọn sẽ được bỏ qua.</p>
+    <p id="algorithmHelp">Kéo chuột khoanh logo Gemini/Veo để chỉ xử lý trong vùng chọn. Không khoanh vùng thì tự nhận diện toàn ảnh.</p>
+    <div id="manualControls">
+    <p>Kéo từ góc trên trái đến góc dưới phải để bao hết watermark, gồm cả viền. Có thể chọn nhiều vùng; mỗi file có vùng chọn riêng.</p>
     <div class="toolbar"><label>Chế độ kéo <select id="drawMode"><option value="target">Khoanh vùng cần xoá</option><option value="donor">Chọn nền thay cho vùng cuối</option></select></label><button id="undo" class="secondary">Xoá vùng cuối</button><button id="reset" class="secondary">Xoá hết vùng</button></div>
-    <p class="hint">Khung xanh: vùng xoá. Khung vàng: nền thay thế. Để chọn nền thủ công, chuyển chế độ rồi kéo khung vàng đến vùng nền sạch có cùng kiểu chi tiết.</p></div>
+    <p class="hint">Khung xanh: vùng xoá. Chọn nền thủ công chỉ dùng với chế độ ghép nền; kéo khung vàng đến nền sạch có cùng kiểu chi tiết.</p></div>
+    <p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Kéo chuột trực tiếp trên ảnh bên dưới để khoanh watermark.</p>
     <div class="canvas-wrap"><canvas id="selection" aria-label="Kéo chuột trên ảnh để khoanh vùng xoá"></canvas></div>
     <div id="seekControls" class="toolbar" hidden><label>Thời điểm (giây) <input id="seek" type="number" min="0" value="0" step="0.1"></label><span id="duration"></span></div>
     <div class="toolbar"><button id="preview" class="secondary">Xem thử kết quả</button><label><input id="disk" type="checkbox"> Lưu video thẳng vào thư mục đã chọn</label></div>
